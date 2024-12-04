@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { jwtDecode } from 'jwt-decode';  // Correct import for jwtDecode
+import { jwtDecode } from 'jwt-decode'; // Correct import for jwtDecode
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +17,7 @@ export class AuthService {
     if (storedToken) {
       this.token = storedToken;
       this.isLoggedIn = true;
+      console.log('Token found in localStorage:', storedToken);  // Debugging log
     }
   }
 
@@ -45,10 +46,12 @@ export class AuthService {
     this.isLoggedIn = false;
     this.token = null;
     localStorage.removeItem('token');
+    console.log('User logged out, token removed from localStorage');
   }
 
   // Check if the user is authenticated
   isAuthenticated(): boolean {
+    console.log('Checking authentication status:', this.token); // Debugging log
     return !!this.token;
   }
 
@@ -57,6 +60,7 @@ export class AuthService {
     this.token = token;
     this.isLoggedIn = true;
     localStorage.setItem('token', token);
+    console.log('Token set:', token);  // Debugging log
   }
 
   // Get the stored JWT token
@@ -73,11 +77,19 @@ export class AuthService {
     }
     
     try {
-      return jwtDecode(token);  // Call jwtDecode function
+      const decoded: any = jwtDecode(token);
+      console.log('Decoded token:', decoded);  // Debugging log
+      // Check for expiration
+      const now = Date.now() / 1000;  // Current time in seconds
+      if (decoded.exp && decoded.exp < now) {
+        console.error('Token expired');
+        this.logout();  // Optionally log out the user if the token is expired
+        return null;
+      }
+      return decoded;
     } catch (error) {
       console.error('Token decoding error:', error);
       return null;
     }
   }
-  
 }
